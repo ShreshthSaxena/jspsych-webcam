@@ -1,0 +1,103 @@
+<!-- continue here ; https://www.jspsych.org/7.2/tutorials/rt-task/#part-7-parameters-for-timelines-with-timeline-variables -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My experiment</title>
+    <script src="jspsych/jspsych.js"></script>
+    <script src="jspsych/plugin-html-keyboard-response.js"></script>
+    <script src="jspsych/plugin-image-keyboard-response.js"></script>
+    <script src="jspsych/plugin-preload.js"></script>
+    <script src="jspsych/plugin-virtual-chinrest.js"></script>
+    <link href="jspsych/jspsych.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body></body>
+  <script>
+    /* initialize jsPsych */
+    var jsPsych = initJsPsych();
+ 	//these work only with server-side js runtimes such as nodejs. Should we switch?
+ 	// var fs = require('fs');
+	// var files = fs.readdirSync('assets/images/');
+	var files = ['i05june05_static_street_boston_p1010806.jpeg',
+				'i102423191.jpeg',
+				'i110996888.jpeg',
+				'i1126243635.jpeg',
+				'i1142164052.jpeg',
+				'i1158892521.jpeg',
+				'i117772445.jpeg',
+				'i12030916.jpeg',
+				'i12049788.jpeg',
+				'i132419257.jpeg',
+				'i14020903.jpeg',
+				'i1508828.jpeg',
+				'i2057541.jpeg',
+				'i2234959271.jpeg',
+				'i40576393.jpeg',
+				'i4466881.jpeg'];
+
+    /* create timeline */
+    var timeline = [];
+    var test_stimuli = files.map(function(x){
+    	return {stimulus: "assets/images/"+x};
+    })
+    console.log(test_stimuli.stimulus);
+
+    /* Preload images */
+    var preload = {
+	  type: jsPsychPreload,
+	  images: files.map(x => "assets/images/" + x)
+	};
+
+    /* define welcome message trial */
+    var welcome = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "Welcome to the experiment. Press any key to begin."
+    };
+    timeline.push(welcome);
+
+    var dev_calib = {
+	    type: jsPsychVirtualChinrest,
+	    blindspot_reps: 3,
+	    resize_units: "none"
+	};
+	timeline.push(dev_calib)
+
+    /* define instructions trial */
+    var instructions = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <p>This could be used to present instructions.</p><p>Can also add fancy tags here, for ex <strong>bold</strong>.</p>
+        
+        <p>Press any key to begin.</p>
+      `,
+      // post_trial_gap: 2000
+    };
+    timeline.push(instructions);
+
+    /* fixation trial */
+    var fixation = {
+	  type: jsPsychHtmlKeyboardResponse,
+	  stimulus: '<div style="font-size:60px;">+</div>',
+	  choices: "NO_KEYS",
+	  trial_duration: 1000,
+	};
+
+    /* show image trial */
+	var img_trial = {
+	  type: jsPsychImageKeyboardResponse,
+	  stimulus: jsPsych.timelineVariable('stimulus'),
+	  choices: [' ', 'q']
+	}
+
+	var test_procedure = {
+	  timeline: [fixation, img_trial],
+	  timeline_variables: test_stimuli
+	}
+	timeline.push(test_procedure);
+
+    /* start the experiment */
+    jsPsych.run(timeline);
+
+  </script>
+</html>
+
