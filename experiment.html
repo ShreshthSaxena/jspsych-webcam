@@ -1,66 +1,119 @@
-<!-- continue here ; https://www.jspsych.org/7.2/tutorials/rt-task/#part-7-parameters-for-timelines-with-timeline-variables -->
-
 <!DOCTYPE html>
 <html>
   <head>
-    <title>My experiment</title>
+    <title>Test experiment</title>
     <script src="jspsych/jspsych.js"></script>
     <script src="jspsych/plugin-html-keyboard-response.js"></script>
     <script src="jspsych/plugin-image-keyboard-response.js"></script>
     <script src="jspsych/plugin-preload.js"></script>
     <script src="jspsych/plugin-virtual-chinrest.js"></script>
+    <script src="jspsych/plugin-fullscreen.js"></script>
+    <script src="custom_jspsych/extension-webcam-record.js"></script>
+    <script src="custom_jspsych/plugin-webcam-setup.js"></script>
+
+    <script src="custom_jspsych/utils.js"></script>
+
     <link href="jspsych/jspsych.css" rel="stylesheet" type="text/css" />
   </head>
   <body></body>
   <script>
-    /* initialize jsPsych */
-    var jsPsych = initJsPsych();
- 	//these work only with server-side js runtimes such as nodejs. Should we switch?
- 	// var fs = require('fs');
-	// var files = fs.readdirSync('assets/images/');
-	var files = ['i05june05_static_street_boston_p1010806.jpeg',
-				'i102423191.jpeg',
-				'i110996888.jpeg',
-				'i1126243635.jpeg',
-				'i1142164052.jpeg',
-				'i1158892521.jpeg',
-				'i117772445.jpeg',
-				'i12030916.jpeg',
-				'i12049788.jpeg',
-				'i132419257.jpeg',
-				'i14020903.jpeg',
-				'i1508828.jpeg',
-				'i2057541.jpeg',
-				'i2234959271.jpeg',
-				'i40576393.jpeg',
-				'i4466881.jpeg'];
+  //  can use PHP to save data, currently just downloading the data after exp completion
+  // 	function saveData(name, data){
+		//   var xhr = new XMLHttpRequest();
+		//   xhr.open('POST', 'write_data.php'); // 'write_data.php' is the path to the php file.
+		//   xhr.setRequestHeader('Content-Type', 'application/json');
+		//   xhr.send(JSON.stringify({filedata: data}));
+		// }
 
-    /* create timeline */
+	 	//these work only with server-side js runtimes such as nodejs. Should we switch?
+	 	// var fs = require('fs');
+		// var files = fs.readdirSync('assets/images/');
+		var files = ['i05june05_static_street_boston_p1010806.jpeg',
+					'i102423191.jpeg',
+					'i110996888.jpeg',
+					// 'i1126243635.jpeg',
+					// 'i1142164052.jpeg',
+					// 'i1158892521.jpeg',
+					// 'i117772445.jpeg',
+					// 'i12030916.jpeg',
+					// 'i12049788.jpeg',
+					// 'i132419257.jpeg',
+					// 'i14020903.jpeg',
+					// 'i1508828.jpeg',
+					// 'i2057541.jpeg',
+					// 'i2234959271.jpeg',
+					'i40576393.jpeg',
+					'i4466881.jpeg'];
+    
+    /* initialize jsPsych */
+    var jsPsych = initJsPsych({
+    	extensions: [
+    	{
+    		type: jsPsychWebcamRecord, params: {
+    			"using_setup_plugin":true,
+    			"default_camera_options":true,
+    	}
+    	}],
+    	on_finish: function() {
+    		csv = jsPsych.data.get().csv();
+    		// saveData(csv); //the PHP XAMPP version, needs to be corrected
+    		downloadCSV(csv, subb+"_"+condition+"_data.csv") //download scipt using JS
+    		jsPsych.data.displayData('csv');
+    	}
+    });
+
+    var subb = jsPsych.randomization.randomID(5);
+		var condition = jsPsych.randomization.sampleWithoutReplacement(['seq1', 'seq2', 'seq3'], 1)[0];
+
+		jsPsych.data.addProperties({
+		  subject: subb,
+		  condition: condition
+		});
+
+    /* create timeline for the experiment */
     var timeline = [];
     var test_stimuli = files.map(function(x){
     	return {stimulus: "assets/images/"+x};
     })
     console.log(test_stimuli.stimulus);
 
-    /* Preload images */
+    /* Preload assets/images */
     var preload = {
-	  type: jsPsychPreload,
-	  images: files.map(x => "assets/images/" + x)
-	};
+		  type: jsPsychPreload,
+		  images: files.map(x => "assets/images/" + x)
+		};
+
+		/* Turn to Fullscreen mode */
+		timeline.push({
+		  type: jsPsychFullscreen,
+		  fullscreen_mode: true
+		});
+
+		/* setup webcam recording parameters and display recording output to participant */
+		var webcam_setup = {
+      type: jsPsychWebcamSetup,
+      instructions: `<p> Please make sure that your face is clearly and centrally visible in the camera frame below. </p>
+
+				<p>Select the internal webcam device from the drop down list and press Next to proceed when you're ready.</p>`,
+    };
+    timeline.push(webcam_setup);
 
     /* define welcome message trial */
     var welcome = {
       type: jsPsychHtmlKeyboardResponse,
-      stimulus: "Welcome to the experiment. Press any key to begin."
+      stimulus: "Welcome to the experiment. This is a demo trial to check if videos are being recorded. Press any key to begin.",
+      extensions: [{type: jsPsychWebcamRecord, params: {trial: "welcome"}}]
     };
     timeline.push(welcome);
 
+    /* Blind-spot distance calibration */
     var dev_calib = {
 	    type: jsPsychVirtualChinrest,
-	    blindspot_reps: 3,
-	    resize_units: "none"
-	};
-	timeline.push(dev_calib)
+	    blindspot_reps: 2,
+	    resize_units: "deg",
+	    pixels_per_unit: 50
+		};
+		timeline.push(dev_calib)
 
     /* define instructions trial */
     var instructions = {
@@ -76,24 +129,29 @@
 
     /* fixation trial */
     var fixation = {
-	  type: jsPsychHtmlKeyboardResponse,
-	  stimulus: '<div style="font-size:60px;">+</div>',
-	  choices: "NO_KEYS",
-	  trial_duration: 1000,
-	};
+		  type: jsPsychHtmlKeyboardResponse,
+		  stimulus: '<div style="font-size:50px;">+</div>', //50px is one visual degree
+		  choices: "NO_KEYS",
+		  trial_duration: 1000
+		};
 
-    /* show image trial */
-	var img_trial = {
-	  type: jsPsychImageKeyboardResponse,
-	  stimulus: jsPsych.timelineVariable('stimulus'),
-	  choices: [' ', 'q']
-	}
+	  /* show image trial */
+		var img_trial = {
+		  type: jsPsychImageKeyboardResponse,
+		  stimulus: jsPsych.timelineVariable('stimulus'),
+		  choices: [' ', 'q'],
+		  stimulus_height: 500, //10 degrees
+		  // stimulus_width: 500,
+		  maintain_aspect_ratio: true,
+		  extensions: [{type: jsPsychWebcamRecord, params: {trial: "freeview"}}]
+		}
 
-	var test_procedure = {
-	  timeline: [fixation, img_trial],
-	  timeline_variables: test_stimuli
-	}
-	timeline.push(test_procedure);
+		var fix_iterations = { //docs: https://www.jspsych.org/7.2/tutorials/rt-task/#part-7-parameters-for-timelines-with-timeline-variables
+		  timeline: [fixation, img_trial],
+		  timeline_variables: test_stimuli,
+		  randomize_order: true
+		}
+		timeline.push(fix_iterations);
 
     /* start the experiment */
     jsPsych.run(timeline);

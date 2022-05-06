@@ -1,3 +1,21 @@
+/* Custom css for webcamSetup plugin*/
+
+video {
+  width: 500px;
+  height: 500px;
+  margin: 20px;
+}
+
+button {
+  padding: 5px;
+  background-color: seagreen;
+  color: white;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+
+
 /*!*************************************************************************************************************!*\
   !*** css ../../node_modules/css-loader/dist/cjs.js!../../node_modules/@fontsource/open-sans/400-italic.css ***!
   \*************************************************************************************************************/
